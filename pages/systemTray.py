@@ -1,10 +1,10 @@
 from PySide6.QtWidgets import QSystemTrayIcon, QMenu, QApplication
-from PySide6.QtGui import QIcon, QAction,QCursor
+from PySide6.QtGui import QIcon, QAction, QCursor
 from PySide6.QtCore import QObject, Qt
 
 from qfluentwidgets import Flyout, InfoBarIcon, FlyoutAnimationType
 
-from methods import text_strip
+from methods import text_strip, get_resource_path, mk_to_html
 
 
 class TrayApp(QObject):
@@ -15,7 +15,10 @@ class TrayApp(QObject):
 
         # 创建系统托盘图标，使用系统主题图标或本地图标
         self.tray = QSystemTrayIcon()
-        self.tray.setIcon(QIcon.fromTheme("edit-paste"))
+        # self.tray.setIcon(QIcon.fromTheme("edit-paste"))
+        iconPath = get_resource_path.resource_path("icons/trayIcon.png")
+        self.tray.setIcon(QIcon(iconPath))
+        # self.tray.setIcon(QIcon('../icons/trayIcon.png'))
         self.tray.setToolTip("小工具合集")  # 设置托盘图标的提示文本
 
         # 创建托盘菜单
@@ -26,10 +29,23 @@ class TrayApp(QObject):
         self.action_show.triggered.connect(self.show_main_window)
         self.menu.addAction(self.action_show)
 
-        # 添加“删除空格”菜单项，并绑定删除空格的方法（暂未实现）
+        # 菜单分隔线
+        self.menu.addSeparator()
+
+        # 添加“删除空格”菜单项，并绑定删除空格的方法
         self.action_del_space = QAction("文本处理")
-        self.action_del_space.triggered.connect(self.delete_spaces)
+        self.action_del_space.triggered.connect(lambda: self.text_process(text_strip.all_func, "文本处理"))
         self.menu.addAction(self.action_del_space)
+
+        # 添加“mk转html”菜单项，并绑方法
+        self.mk_to_html = QAction("markdown->html")
+        self.mk_to_html.triggered.connect(lambda: self.text_process(mk_to_html.mk_to_html, "markdown转html"))
+        self.menu.addAction(self.mk_to_html)
+
+        # 添加“美元符号显示错误”菜单项，并绑方法
+        self.dollar_error = QAction("美元符号显示错误处理")
+        self.dollar_error.triggered.connect(lambda: self.text_process(text_strip.sub_dollar, "美元符号显示错误处理"))
+        self.menu.addAction(self.dollar_error)
 
         # 菜单分隔线
         self.menu.addSeparator()
@@ -75,26 +91,16 @@ class TrayApp(QObject):
         self.tray.hide()
         self.app.quit()
 
-    def delete_spaces(self):
+    def text_process(self, func, msg):
         """
         获取剪贴板内容，调用相关函数，再放回剪贴板。
         """
         clipboard = QApplication.clipboard()  # 获取剪贴板对象
         text = clipboard.text()  # 获取剪贴板文本内容
-        text = text_strip.all_func(text)  # 调用功能函数
+        text = func(text)  # 调用功能函数
         clipboard.setText(text)  # 设置回剪贴板
-        self.showFlyout(QCursor.pos())  # 弹窗提示
+        self.tray.showMessage(msg, "处理完成文字已复制到剪贴板。", QSystemTrayIcon.MessageIcon.NoIcon, 2000)
 
-    # def showFlyout(self):
-    #     Flyout.create(
-    #         icon=InfoBarIcon.SUCCESS,
-    #         title='',
-    #         content="处理成功",
-    #         target=self.menu,
-    #         parent=self.menu,
-    #         # isClosable=True,
-    #         aniType=FlyoutAnimationType.PULL_UP
-    #     )
     def showFlyout(self, position):
         flyout = Flyout.create(
             icon=InfoBarIcon.SUCCESS,
