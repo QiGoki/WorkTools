@@ -1,5 +1,5 @@
 from qfluentwidgets import SimpleCardWidget,CaptionLabel
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QWidget, QVBoxLayout
 
 
 class myWidget(QWidget):
@@ -8,6 +8,11 @@ class myWidget(QWidget):
         self.label = CaptionLabel(self)
         self.label.setText("文本处理")
 
-class myCardWidget(SimpleCardWidget):
-    def __init__(self):
-        super().__init__()
+        self.v = QVBoxLayout()
+        self.v.addWidget(self.label)
+
+        self.setObjectName("test")
+#
+# class myCardWidget(SimpleCardWidget):
+#     def __init__(self):
+#         super().__init__()

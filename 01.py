@@ -4,9 +4,9 @@ from PySide6.QtWidgets import QApplication, QFrame, QHBoxLayout, QWidget
 from PySide6.QtCore import Qt, QEvent
 from PySide6.QtGui import QFont, QIcon
 
-from pages.noSpace import NoSpace, AppCard
+from pages.noSpace import noSpace
 from pages.systemTray import TrayApp
-from pages.test import Test
+from pages.test import myWidget
 
 
 class Window(FluentWindow):
@@ -16,15 +16,13 @@ class Window(FluentWindow):
         super().__init__()
 
         # 创建子界面，实际使用时将 Widget 换成自己的子界面
-        self.noSpaceInterface = AppCard("hello", "world")
-        self.Test = Test()
+        self.noSpaceInterface = noSpace()
 
         self.initNavigation()
         self.initWindow()
 
     def initNavigation(self):
-        # self.addSubInterface(self.noSpaceInterface, FIF.HOME, 'test')
-        self.addSubInterface(self.Test, FIF.TRAIN, 'test1')
+        self.addSubInterface(self.noSpaceInterface, FIF.HOME, 'test')
     def initWindow(self):
         self.resize(900, 700)
         self.setWindowTitle('小工具箱')
