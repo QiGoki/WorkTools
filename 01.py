@@ -6,7 +6,6 @@ from PySide6.QtGui import QFont, QIcon
 
 from pages.noSpace import noSpace
 from pages.systemTray import TrayApp
-from pages.test import myWidget
 
 
 class Window(FluentWindow):
@@ -24,7 +23,7 @@ class Window(FluentWindow):
     def initNavigation(self):
         self.addSubInterface(self.noSpaceInterface, FIF.HOME, 'test')
     def initWindow(self):
-        self.resize(900, 700)
+        self.resize(1000, 700)
         self.setWindowTitle('小工具箱')
         self.setWindowIcon(QIcon('icons/trayIcon.png'))
 

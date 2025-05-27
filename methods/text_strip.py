@@ -5,7 +5,7 @@ def strip_text(text):
     # 句号、逗号、-的空格摘除。
     # ' [^\w\s-] ' => 所有 非字母数字、空格 前后有空格的
     # '(?<!\s) - ' => 前瞻断言，没有\s才匹配' - '。
-    r = r' \.|\. | ,|, | ，|， | 。|。 | [^\w\s-] |(?<!\s) - |[^\s]- '
+    r = r'\W | \W|[^\w\s-] |(?<!\s) - |[^\s]- '
     text = re.sub(r, lambda m: m.group(0).strip(), text)
     return text
 
@@ -20,7 +20,7 @@ def math_trans(text):
 
 
 def sub_dollar(text):
-    text = re.sub('\$', '＄', text)
+    text = re.sub(r'\$', '＄', text)
     return text
 
 

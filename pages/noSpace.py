@@ -1,11 +1,12 @@
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QVBoxLayout, QWidget, QListWidgetItem
-from PySide6.QtCore import Qt, QEvent
+from PySide6.QtCore import Qt, QEvent, QSize
 
 from qfluentwidgets import (TextEdit, TitleLabel, HorizontalSeparator, CommandBar, ListWidget, SubtitleLabel,
-                            SimpleCardWidget, BodyLabel, CaptionLabel
+                            SimpleCardWidget, BodyLabel, CaptionLabel, SearchLineEdit, Action, Slider
                             )
 
-from data.textProcessData import testData
+from data.textProcessData import fakeData
+from pages.widthConfig import mySlider
 
 
 class noSpace(QWidget):
@@ -45,48 +46,65 @@ class TextProcess(QFrame):
         self.hBoxLayout = QHBoxLayout()
         self.hBoxLayout.addWidget(self.list)
 
+        # 测试
+        self.s_HistoryList = mySlider(self, self.list.width())
+        self.s_listBox = mySlider(self, self.list.listBox.width())
+        self.s_listItem = mySlider(self, self.list.list.width())
+        self.hBoxLayout.addWidget(self.s_HistoryList)
+        self.hBoxLayout.addWidget(self.s_listBox)
+        self.hBoxLayout.addWidget(self.s_listItem)
+
         self.vBoxLayout.addWidget(self.commandBar)
         self.vBoxLayout.addWidget(self.textEdit)
 
         self.hBoxLayout.addLayout(self.vBoxLayout)
         # 一些格式设置
         self.hBoxLayout.setSpacing(10)
-        self.hBoxLayout.setStretchFactor(self.list, 3)
-        self.hBoxLayout.setStretchFactor(self.vBoxLayout, 6)
 
         self.setLayout(self.hBoxLayout)
 
-    def initList(self):
-        self.list.addItems(['1', '2', '3'])
-    # def resizeEvent(self, event):
-    #     if self.parent():
-    #         new_width = self.parent().width() / 2
-    #         self.setFixedWidth(new_width)
-    #     super().resizeEvent(event)
 
-
-class HistoryList(QFrame):
+class HistoryList(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+        #标题
         self.title = SubtitleLabel(self)
         self.title.setText('历史记录')
-        self.list = ListWidget(self)
+        #搜索框
+        self.searchLineEdit = SearchLineEdit(self)
+        self.initSearch()
+        #列表
+
+        # 创建父容器并设置样式
+        self.listBox = SimpleCardWidget(self)
+        self.list = ListWidget(self.listBox)
+        self.list.setFixedWidth(300)
+        self.listLayout = QVBoxLayout(self.listBox)
+        self.listLayout.addWidget(self.list)
+        self.listLayout.setContentsMargins(5, 0, 0, 0)
         self.initList()
 
         self.vBoxLayout = QVBoxLayout()
         self.vBoxLayout.addWidget(self.title)
-        self.vBoxLayout.addWidget(self.list)
+        self.vBoxLayout.addWidget(self.searchLineEdit)
+        self.vBoxLayout.addWidget(self.listBox)
+        self.setFixedWidth(300)
+        self.setLayout(self.vBoxLayout)
 
     def initList(self):
-        item = QListWidgetItem()
-        itemWidget = HistoryListItemCard("test", "2025-05-26")
-        self.list.addItem(item)
-        self.list.setItemWidget(item, itemWidget)
+        self.list.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        for i in fakeData:
+            item = QListWidgetItem()
+            itemWidget = HistoryListItemCard(i["content"], i["date"])
+            item.setSizeHint(itemWidget.size())
+            self.list.addItem(item)
+            self.list.setItemWidget(item, itemWidget)
 
-        item1 = QListWidgetItem()
-        itemWidget = HistoryListItemCard("test", "2025-05-26")
-        self.list.addItem(item1)
-        self.list.setItemWidget(item1, itemWidget)
+    def initSearch(self):
+        self.action = Action()
+        self.searchLineEdit.setPlaceholderText("可按内容或时间搜索")
+        # self.searchLineEdit.addAction()
 
 
 class HistoryListItemCard(SimpleCardWidget):
@@ -97,7 +115,11 @@ class HistoryListItemCard(SimpleCardWidget):
         self.time = CaptionLabel(self)
         self.time.setText(time)
 
+        self.time.setStyleSheet("color: #cccccc;")
+
         self.vBoxLayout = QVBoxLayout()
         self.vBoxLayout.addWidget(self.content)
-        self.vBoxLayout.addWidget(self.time)
+        self.vBoxLayout.addWidget(self.time, alignment=Qt.AlignmentFlag.AlignRight)
+        self.setStyleSheet("""""")
+        self.setFixedSize(200, 60)
         self.setLayout(self.vBoxLayout)

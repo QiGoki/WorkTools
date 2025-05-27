@@ -1,188 +1,130 @@
 import sys
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QPixmap
-from PyQt6.QtWidgets import (QApplication, QWidget, QHBoxLayout, QVBoxLayout,
-                             QFileDialog, QListWidgetItem)
-from qfluentwidgets import (MSFluentWindow, FluentIcon, setTheme, Theme,
-                            PrimaryPushButton, ListWidget, ImageLabel,
-                            CaptionLabel, BodyLabel, LineEdit)
+from PySide6.QtWidgets import (QApplication, QWidget, QLineEdit, QPushButton,
+                               QVBoxLayout, QHBoxLayout, QMenu)
+from PySide6.QtCore import Qt, QSize
+from PySide6.QtGui import QIcon, QFont,QAction
 
 
-class ChatBubble(BodyLabel):
-    def __init__(self, text: str, is_user: bool, parent=None):
-        super().__init__(text, parent)
-        self.is_user = is_user
-        self.setWordWrap(True)
-        self.setAlignment(Qt.AlignmentFlag.AlignRight if is_user else Qt.AlignmentFlag.AlignLeft)
-        self.setProperty("isUser", is_user)
+class SearchBox(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.initUI()
+
+    def initUI(self):
+        # 创建主布局
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        # 创建下拉菜单按钮
+        self.dropdown_btn = QPushButton("全部")
+        self.dropdown_btn.setObjectName("dropdownButton")
+        self.dropdown_btn.setMinimumHeight(30)
+        self.dropdown_btn.setFlat(True)
+        self.dropdown_btn.setMenu(self.createMenu())
+
+        # 创建搜索输入框
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("搜索...")
+        self.search_input.setObjectName("searchInput")
+        self.search_input.setMinimumHeight(30)
+
+        # 创建搜索按钮
+        self.search_btn = QPushButton("搜索")
+        self.search_btn.setObjectName("searchButton")
+        self.search_btn.setMinimumHeight(30)
+        self.search_btn.setCursor(Qt.PointingHandCursor)
+        self.search_btn.clicked.connect(self.onSearch)
+
+        # 添加到布局
+        layout.addWidget(self.dropdown_btn)
+        layout.addWidget(self.search_input, 1)  # 让输入框占据剩余空间
+        layout.addWidget(self.search_btn)
+
+        # 设置样式表
         self.setStyleSheet("""
-            ChatBubble[isUser="true"] {
-                background: #0078d4;
-                color: white;
-                border-radius: 8px;
-                padding: 8px 12px;
-                margin: 4px 0;
-                max-width: 70%;
+            #dropdownButton {
+                border: 1px solid #ccc;
+                border-right: none;
+                border-radius: 4px 0 0 4px;
+                padding: 0 10px;
+                background-color: #f5f5f5;
+                text-align: left;
             }
-            ChatBubble[isUser="false"] {
-                background: #f0f0f0;
-                color: black;
-                border-radius: 8px;
-                padding: 8px 12px;
-                margin: 4px 0;
-                max-width: 70%;
+            #dropdownButton::menu-indicator {
+                subcontrol-position: center right;
+                right: 5px;
+            }
+            #searchInput {
+                border: 1px solid #ccc;
+                border-left: none;
+                border-right: none;
+                padding: 0 5px;
+            }
+            #searchButton {
+                border: 1px solid #ccc;
+                border-left: none;
+                border-radius: 0 4px 4px 0;
+                padding: 0 15px;
+                background-color: #f5f5f5;
+            }
+            #searchButton:hover {
+                background-color: #e0e0e0;
+            }
+            #dropdownButton:hover, #searchInput:hover {
+                border-color: #aaa;
+            }
+            #dropdownButton:focus, #searchInput:focus, #searchButton:focus {
+                outline: none;
+                border-color: #888;
             }
         """)
 
+    def createMenu(self):
+        """创建下拉菜单内容"""
+        menu = QMenu(self)
 
-class MainWindow(MSFluentWindow):
-    def __init__(self):
-        super().__init__()
-        setTheme(Theme.LIGHT)
-        self.setWindowTitle("Image Assistant")
-        self.resize(1200, 800)
+        # 添加菜单项
+        menu.addAction("全部", lambda: self.setFilter("全部"))
+        menu.addAction("图片", lambda: self.setFilter("图片"))
+        menu.addAction("视频", lambda: self.setFilter("视频"))
+        menu.addAction("文档", lambda: self.setFilter("文档"))
+        menu.addAction("音乐", lambda: self.setFilter("音乐"))
 
-        # 主界面初始化（关键修复点）
-        self.mainInterface = QWidget()
-        self.mainInterface.setObjectName("mainInterface")  # 添加objectName
-        self.initLayout()
-        self.initWidgets()
+        return menu
 
-        # 添加主界面到导航
-        self.addSubInterface(self.mainInterface, FluentIcon.HOME, "Main")
+    def setFilter(self, filter_text):
+        """设置当前筛选条件"""
+        self.dropdown_btn.setText(filter_text)
 
-    def initLayout(self):
-        self.mainLayout = QHBoxLayout(self.mainInterface)
-        self.mainLayout.setContentsMargins(20, 20, 20, 20)
-        self.mainLayout.setSpacing(20)
-
-        # 左侧布局（图片区域）
-        self.leftLayout = QVBoxLayout()
-        self.leftLayout.setSpacing(15)
-
-        # 右侧布局（对话区域）
-        self.rightLayout = QVBoxLayout()
-        self.rightLayout.setSpacing(15)
-
-        self.mainLayout.addLayout(self.leftLayout, 4)
-        self.mainLayout.addLayout(self.rightLayout, 6)
-
-    def initWidgets(self):
-        # 图片显示区域
-        self.imageLabel = ImageLabel(self.mainInterface)
-        self.imageLabel.setBorderRadius(8, 8, 8, 8)
-        self.imageLabel.setMinimumSize(400, 400)
-        self.imageLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.imageLabel.setText("Click to upload image")
-
-        # 上传按钮
-        self.uploadBtn = PrimaryPushButton("Upload Image", self.mainInterface)
-        self.uploadBtn.setIcon(FluentIcon.PHOTO)
-        self.uploadBtn.clicked.connect(self.openImage)
-
-        # 预设按钮组
-        self.presetLayout = QHBoxLayout()
-        self.presetBtn1 = PrimaryPushButton("Preset 1", self.mainInterface)
-        self.presetBtn2 = PrimaryPushButton("Preset 2", self.mainInterface)
-        self.configBtn = PrimaryPushButton(FluentIcon.SETTING, "")
-        self.presetLayout.addWidget(self.presetBtn1)
-        self.presetLayout.addWidget(self.presetBtn2)
-        self.presetLayout.addWidget(self.configBtn)
-
-        # 左侧布局组装
-        self.leftLayout.addWidget(self.imageLabel)
-        self.leftLayout.addLayout(self.presetLayout)
-        self.leftLayout.addWidget(self.uploadBtn)
-
-        # 对话列表
-        self.chatList = ListWidget(self.mainInterface)
-        self.chatList.setStyleSheet("background: transparent;")
-        self.chatList.setSpacing(10)
-
-        # 输入区域
-        self.inputLayout = QHBoxLayout()
-        self.inputField = LineEdit()
-        self.sendBtn = PrimaryPushButton("Send", self.mainInterface)
-        self.inputLayout.addWidget(self.inputField)
-        self.inputLayout.addWidget(self.sendBtn)
-
-        # 右侧布局组装
-        self.rightLayout.addWidget(CaptionLabel("Conversation"))
-        self.rightLayout.addWidget(self.chatList)
-        self.rightLayout.addLayout(self.inputLayout)
-
-        # 信号连接
-        self.sendBtn.clicked.connect(self.sendMessage)
-        self.presetBtn1.clicked.connect(lambda: self.sendPreset("Preset 1 query"))
-        self.presetBtn2.clicked.connect(lambda: self.sendPreset("Preset 2 query"))
-
-    def openImage(self):
-        path, _ = QFileDialog.getOpenFileName(
-            self, "Select Image", "", "Images (*.png *.jpg *.jpeg)")
-        if path:
-            self.showImage(path)
-
-    def showImage(self, path):
-        pixmap = QPixmap(path)
-        scaled_pixmap = pixmap.scaled(
-            self.imageLabel.width(), self.imageLabel.height(),
-            Qt.AspectRatioMode.KeepAspectRatio,
-            Qt.TransformationMode.SmoothTransformation
-        )
-        self.imageLabel.setImage(scaled_pixmap)
-
-    def sendMessage(self):
-        text = self.inputField.text().strip()
-        if not text:
-            return
-
-        self.addUserMessage(text)
-        self.inputField.clear()
-        self.simulateModelResponse(text)
-
-    def sendPreset(self, text):
-        self.addUserMessage(text)
-        self.simulateModelResponse(text)
-
-    def addUserMessage(self, text):
-        bubble = ChatBubble(text, True)
-        item = QListWidgetItem()
-        item.setSizeHint(bubble.sizeHint())
-        self.chatList.addItem(item)
-        self.chatList.setItemWidget(item, bubble)
-        self.chatList.scrollToBottom()
-
-    def addBotMessage(self, text):
-        bubble = ChatBubble(text, False)
-        item = QListWidgetItem()
-        item.setSizeHint(bubble.sizeHint())
-        self.chatList.addItem(item)
-        self.chatList.setItemWidget(item, bubble)
-        self.chatList.scrollToBottom()
-
-    def simulateModelResponse(self, query):
-        response = f"Response to: {query}\nThis is a sample answer from AI."
-        self.addBotMessage(response)
+    def onSearch(self):
+        """执行搜索操作"""
+        search_text = self.search_input.text()
+        filter_type = self.dropdown_btn.text()
+        print(f"搜索: {filter_type} - {search_text}")
 
 
-if __name__ == '__main__':
+# 使用示例
+if __name__ == "__main__":
     app = QApplication(sys.argv)
 
-    # 强制设置字体解决警告
-    app.setStyleSheet("""
-    * {
-        font-family: Arial;
-        font-size: 13px;
-    }
-    QMessageBox {
-        font-family: Arial;
-    }
-    """)
+    # 确保中文显示正常
+    font = QFont("SimHei")
+    app.setFont(font)
 
-    window = MainWindow()
+    window = QWidget()
+    layout = QVBoxLayout(window)
+    layout.setContentsMargins(20, 20, 20, 20)
+
+    # 添加搜索框
+    search_box = SearchBox()
+    layout.addWidget(search_box)
+
+    # 添加一些间距
+    layout.addStretch(1)
+
+    window.setWindowTitle("搜索框示例")
+    window.resize(500, 200)
     window.show()
-    sys.exit(app.exec())
 
-
-
-
+    sys.exit(app.exec_())
