@@ -6,7 +6,7 @@ from qfluentwidgets import (TextEdit, TitleLabel, HorizontalSeparator, CommandBa
                             )
 
 from data.textProcessData import fakeData
-from pages.widthConfig import mySlider
+from pages.widthConfig import MySlider
 
 
 class noSpace(QWidget):
@@ -31,28 +31,22 @@ class noSpace(QWidget):
 
         self.setObjectName('removeSpaces')
 
+        # self.history_sb = MySlider(self.tp.historyListArea,"historyListArea")
+        # self.vbox.addWidget(self.history_sb)
 
 class TextProcess(QFrame):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.list = HistoryList(self)
+        self.historyListArea = HistoryList(self)
+        self.historyListArea.setObjectName("historyListArea")
 
         self.vBoxLayout = QVBoxLayout()
         self.commandBar = CommandBar(self)
         self.textEdit = TextEdit(self)
-
         #左列表右处理
         self.hBoxLayout = QHBoxLayout()
-        self.hBoxLayout.addWidget(self.list)
-
-        # 测试
-        self.s_HistoryList = mySlider(self, self.list.width())
-        self.s_listBox = mySlider(self, self.list.listBox.width())
-        self.s_listItem = mySlider(self, self.list.list.width())
-        self.hBoxLayout.addWidget(self.s_HistoryList)
-        self.hBoxLayout.addWidget(self.s_listBox)
-        self.hBoxLayout.addWidget(self.s_listItem)
+        self.hBoxLayout.addWidget(self.historyListArea)
 
         self.vBoxLayout.addWidget(self.commandBar)
         self.vBoxLayout.addWidget(self.textEdit)
@@ -77,18 +71,19 @@ class HistoryList(QWidget):
 
         # 创建父容器并设置样式
         self.listBox = SimpleCardWidget(self)
+        self.listBox.setObjectName("listBox")
         self.list = ListWidget(self.listBox)
-        self.list.setFixedWidth(300)
+        self.list.setObjectName("list")
+        # self.list.setFixedWidth(326)
         self.listLayout = QVBoxLayout(self.listBox)
         self.listLayout.addWidget(self.list)
         self.listLayout.setContentsMargins(5, 0, 0, 0)
         self.initList()
-
         self.vBoxLayout = QVBoxLayout()
         self.vBoxLayout.addWidget(self.title)
         self.vBoxLayout.addWidget(self.searchLineEdit)
         self.vBoxLayout.addWidget(self.listBox)
-        self.setFixedWidth(300)
+        self.setFixedWidth(350)
         self.setLayout(self.vBoxLayout)
 
     def initList(self):
@@ -121,5 +116,5 @@ class HistoryListItemCard(SimpleCardWidget):
         self.vBoxLayout.addWidget(self.content)
         self.vBoxLayout.addWidget(self.time, alignment=Qt.AlignmentFlag.AlignRight)
         self.setStyleSheet("""""")
-        self.setFixedSize(200, 60)
+        self.setFixedSize(300, 60)
         self.setLayout(self.vBoxLayout)

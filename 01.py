@@ -6,7 +6,7 @@ from PySide6.QtGui import QFont, QIcon
 
 from pages.noSpace import noSpace
 from pages.systemTray import TrayApp
-
+from pages.widthConfig import MySlider
 
 class Window(FluentWindow):
     """ 主界面 """
@@ -37,4 +37,10 @@ if __name__ == '__main__':
     w = Window()
     tray = TrayApp(app, w)
     w.show()
+
+    test_slider = MySlider([w.noSpaceInterface.tp.historyListArea,
+                            w.noSpaceInterface.tp.historyListArea.listBox,
+                            w.noSpaceInterface.tp.historyListArea.list])
+    test_slider.show()
+
     app.exec()
