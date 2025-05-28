@@ -6,7 +6,7 @@ from PySide6.QtGui import QFont, QIcon
 
 from pages.noSpace import noSpace
 from pages.systemTray import TrayApp
-from pages.widthConfig import MySlider
+from pages.Setting import Setting
 
 class Window(FluentWindow):
     """ 主界面 """
@@ -17,11 +17,14 @@ class Window(FluentWindow):
         # 创建子界面，实际使用时将 Widget 换成自己的子界面
         self.noSpaceInterface = noSpace()
 
+        #设置页面
+        self.settingInterface = Setting([self])
         self.initNavigation()
         self.initWindow()
 
     def initNavigation(self):
         self.addSubInterface(self.noSpaceInterface, FIF.HOME, 'test')
+        self.addSubInterface(self.settingInterface, FIF.SETTING, '设置',NavigationItemPosition.BOTTOM)
     def initWindow(self):
         self.resize(1000, 700)
         self.setWindowTitle('小工具箱')
@@ -37,10 +40,10 @@ if __name__ == '__main__':
     w = Window()
     tray = TrayApp(app, w)
     w.show()
-
-    test_slider = MySlider([w.noSpaceInterface.tp.historyListArea,
-                            w.noSpaceInterface.tp.historyListArea.listBox,
-                            w.noSpaceInterface.tp.historyListArea.list])
-    test_slider.show()
+    #
+    # test_slider = Setting([w.noSpaceInterface.tp.historyListArea,
+    #                        w.noSpaceInterface.tp.historyListArea.listBox,
+    #                        w.noSpaceInterface.tp.historyListArea.list])
+    # test_slider.show()
 
     app.exec()

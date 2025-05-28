@@ -1,9 +1,20 @@
-from qfluentwidgets import Slider, LineEdit, CaptionLabel, ToolButton, FluentIcon, FluentIconBase,ToolTipFilter, ToolTipPosition
+from qfluentwidgets import Slider, LineEdit, CaptionLabel, ToolButton, FluentIcon, ToolTipFilter, \
+    ToolTipPosition
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QVBoxLayout
 
 
-class MySlider(QFrame):
+# 按钮初始化函数
+def init_btn(btn, tip_text, signal_func):
+    btn.setToolTip(tip_text)  # 设置提示词
+    btn.setToolTipDuration(1000)  # 设置显示时间
+    # 给按钮安装工具提示过滤器
+    btn.installEventFilter(ToolTipFilter(btn, showDelay=300, position=ToolTipPosition.BOTTOM))
+    # 按钮信号
+    btn.clicked.connect(signal_func)
+
+
+class Setting(QFrame):
     def __init__(self, target_widgets: [], parent=None):
         super().__init__(parent)
         # 批量保存widget
@@ -25,6 +36,7 @@ class MySlider(QFrame):
 
         self.init(target_widgets)
 
+        self.setObjectName("setting")
     # 初始化，主要就是生生成lider
     def init(self, target_widgets):
         for widget in target_widgets:
@@ -32,22 +44,14 @@ class MySlider(QFrame):
             self.main_layout.addWidget(item)
             self.sliders.append(item)
         # 按钮初始化
-        self.init_btn(self.reset_btn,"重置设置",self.on_rest_btn_clicked)
-        self.init_btn(self.add_widget_btn,"添加要调整的组件",self.on_add_btn_clicked)
+        init_btn(self.reset_btn, "重置设置", self.on_rest_btn_clicked)
+        init_btn(self.add_widget_btn, "添加要调整的组件", self.on_add_btn_clicked)
         # 焦点设置到窗口
         self.setFocus()
         # 设置窗口信息
         self.setFixedWidth(550)
         self.setWindowTitle("设置")
-        self.setWindowIcon(FluentIconBase.qicon(FluentIcon.SETTING))
-    # 按钮初始化函数
-    def init_btn(self, btn, tip_text, signal_func):
-        btn.setToolTip(tip_text)  # 设置提示词
-        btn.setToolTipDuration(1000)  # 设置显示时间
-        # 给按钮安装工具提示过滤器
-        btn.installEventFilter(ToolTipFilter(btn, showDelay=300, position=ToolTipPosition.BOTTOM))
-        # 按钮信号
-        btn.clicked.connect(signal_func)
+        self.setWindowIcon(FluentIcon.SETTING.icon())
 
     def on_rest_btn_clicked(self):
         for slider in self.sliders:
@@ -55,6 +59,7 @@ class MySlider(QFrame):
 
     def on_add_btn_clicked(self):
         pass
+
 
 class SliderItem(QFrame):
     def __init__(self, target_widget, parent=None):

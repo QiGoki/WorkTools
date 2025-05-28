@@ -6,7 +6,7 @@ from qfluentwidgets import (TextEdit, TitleLabel, HorizontalSeparator, CommandBa
                             )
 
 from data.textProcessData import fakeData
-from pages.widthConfig import MySlider
+from pages.Setting import Setting
 
 
 class noSpace(QWidget):
@@ -74,7 +74,6 @@ class HistoryList(QWidget):
         self.listBox.setObjectName("listBox")
         self.list = ListWidget(self.listBox)
         self.list.setObjectName("list")
-        # self.list.setFixedWidth(326)
         self.listLayout = QVBoxLayout(self.listBox)
         self.listLayout.addWidget(self.list)
         self.listLayout.setContentsMargins(5, 0, 0, 0)
@@ -105,16 +104,22 @@ class HistoryList(QWidget):
 class HistoryListItemCard(SimpleCardWidget):
     def __init__(self, text, time):
         super().__init__()
-        self.content = BodyLabel(self)
-        self.content.setText(text)
+        # 内容
+        self.content = text
+        # 用于展示的部分，大于20就加“... ...”
+        self.display = BodyLabel(self)
+        self.setDisplay()
         self.time = CaptionLabel(self)
         self.time.setText(time)
 
         self.time.setStyleSheet("color: #cccccc;")
 
         self.vBoxLayout = QVBoxLayout()
-        self.vBoxLayout.addWidget(self.content)
+        self.vBoxLayout.addWidget(self.display)
         self.vBoxLayout.addWidget(self.time, alignment=Qt.AlignmentFlag.AlignRight)
-        self.setStyleSheet("""""")
-        self.setFixedSize(300, 60)
+        self.setFixedSize(305, 60)
         self.setLayout(self.vBoxLayout)
+
+    def setDisplay(self):
+        if len(self.content) >21:
+            self.display.setText(self.content[:20]+"...")

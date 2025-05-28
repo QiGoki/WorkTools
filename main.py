@@ -1,130 +1,113 @@
 import sys
-from PySide6.QtWidgets import (QApplication, QWidget, QLineEdit, QPushButton,
-                               QVBoxLayout, QHBoxLayout, QMenu)
-from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QIcon, QFont,QAction
+from PySide6.QtWidgets import (QApplication, QMainWindow, QPushButton, QTreeWidget,
+                               QTreeWidgetItem, QVBoxLayout, QWidget, QDialog, QRadioButton, QGroupBox, QLineEdit,
+                               QLabel)
+from PySide6.QtCore import Qt
+from qfluentwidgets import TreeWidget, MessageBoxBase,StrongBodyLabel
 
 
-class SearchBox(QWidget):
-    def __init__(self, parent=None):
+class ControlTreeViewer(MessageBoxBase):
+    """显示widget控件树的对话框"""
+
+    def __init__(self, parent_widget, parent):
         super().__init__(parent)
-        self.initUI()
+        self.title = StrongBodyLabel("控件树查看器")
 
-    def initUI(self):
-        # 创建主布局
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        # 创建树状列表
+        self.tree_widget = TreeWidget()
+        self.tree_widget.setHeaderLabels(["控件类型", "ObjectName", "文本内容", "位置"])
 
-        # 创建下拉菜单按钮
-        self.dropdown_btn = QPushButton("全部")
-        self.dropdown_btn.setObjectName("dropdownButton")
-        self.dropdown_btn.setMinimumHeight(30)
-        self.dropdown_btn.setFlat(True)
-        self.dropdown_btn.setMenu(self.createMenu())
+        # 构建控件树
+        self.build_control_tree(parent_widget)
 
-        # 创建搜索输入框
-        self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("搜索...")
-        self.search_input.setObjectName("searchInput")
-        self.search_input.setMinimumHeight(30)
+        # 设置布局
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.title)
+        layout.addWidget(self.tree_widget)
+        self.viewLayout.addLayout(layout)
+        self.widget.setMinimumWidth(300)
+        # 展开所有节点
+        self.tree_widget.expandAll()
 
-        # 创建搜索按钮
-        self.search_btn = QPushButton("搜索")
-        self.search_btn.setObjectName("searchButton")
-        self.search_btn.setMinimumHeight(30)
-        self.search_btn.setCursor(Qt.PointingHandCursor)
-        self.search_btn.clicked.connect(self.onSearch)
+    def build_control_tree(self, parent_widget, parent_item=None):
+        """递归构建控件树"""
+        # 创建当前控件的树节点
+        widget_info = [
+            parent_widget.__class__.__name__,
+            parent_widget.objectName() or "(未设置)",
+            self._get_widget_text(parent_widget) or "(无文本)",
+            f"({parent_widget.x()}, {parent_widget.y()})"
+        ]
 
-        # 添加到布局
-        layout.addWidget(self.dropdown_btn)
-        layout.addWidget(self.search_input, 1)  # 让输入框占据剩余空间
-        layout.addWidget(self.search_btn)
+        if parent_item is None:
+            # 根节点
+            tree_item = QTreeWidgetItem(self.tree_widget, widget_info)
+        else:
+            # 子节点
+            tree_item = QTreeWidgetItem(parent_item, widget_info)
 
-        # 设置样式表
-        self.setStyleSheet("""
-            #dropdownButton {
-                border: 1px solid #ccc;
-                border-right: none;
-                border-radius: 4px 0 0 4px;
-                padding: 0 10px;
-                background-color: #f5f5f5;
-                text-align: left;
-            }
-            #dropdownButton::menu-indicator {
-                subcontrol-position: center right;
-                right: 5px;
-            }
-            #searchInput {
-                border: 1px solid #ccc;
-                border-left: none;
-                border-right: none;
-                padding: 0 5px;
-            }
-            #searchButton {
-                border: 1px solid #ccc;
-                border-left: none;
-                border-radius: 0 4px 4px 0;
-                padding: 0 15px;
-                background-color: #f5f5f5;
-            }
-            #searchButton:hover {
-                background-color: #e0e0e0;
-            }
-            #dropdownButton:hover, #searchInput:hover {
-                border-color: #aaa;
-            }
-            #dropdownButton:focus, #searchInput:focus, #searchButton:focus {
-                outline: none;
-                border-color: #888;
-            }
-        """)
+        # 存储widget引用以便后续操作(可选)
+        tree_item.setData(0, Qt.UserRole, parent_widget)
 
-    def createMenu(self):
-        """创建下拉菜单内容"""
-        menu = QMenu(self)
+        # 递归添加所有子控件
+        for child in parent_widget.findChildren(QWidget):
+            self.build_control_tree(child, tree_item)
 
-        # 添加菜单项
-        menu.addAction("全部", lambda: self.setFilter("全部"))
-        menu.addAction("图片", lambda: self.setFilter("图片"))
-        menu.addAction("视频", lambda: self.setFilter("视频"))
-        menu.addAction("文档", lambda: self.setFilter("文档"))
-        menu.addAction("音乐", lambda: self.setFilter("音乐"))
-
-        return menu
-
-    def setFilter(self, filter_text):
-        """设置当前筛选条件"""
-        self.dropdown_btn.setText(filter_text)
-
-    def onSearch(self):
-        """执行搜索操作"""
-        search_text = self.search_input.text()
-        filter_type = self.dropdown_btn.text()
-        print(f"搜索: {filter_type} - {search_text}")
+    def _get_widget_text(self, widget):
+        """获取控件的文本内容(如果有)"""
+        if hasattr(widget, 'text') and callable(widget.text):
+            return widget.text()
+        elif hasattr(widget, 'toPlainText') and callable(widget.toPlainText):
+            return widget.toPlainText()
+        return None
 
 
-# 使用示例
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("控件树演示")
+        self.resize(400, 300)
+
+        # 创建中央部件和布局
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        layout = QVBoxLayout(central_widget)
+
+        # 创建示例控件
+        self.add_button = QPushButton("Add")
+        self.add_button.clicked.connect(self.show_control_tree)
+        layout.addWidget(self.add_button)
+
+        # 添加一些其他控件用于演示
+        label = QLabel("示例标签")
+        layout.addWidget(label)
+
+        edit = QLineEdit("示例输入框")
+        layout.addWidget(edit)
+
+        group_box = QGroupBox("分组框")
+        group_layout = QVBoxLayout()
+        group_box.setLayout(group_layout)
+
+        radio1 = QRadioButton("选项1")
+        radio2 = QRadioButton("选项2")
+        group_layout.addWidget(radio1)
+        group_layout.addWidget(radio2)
+
+        layout.addWidget(group_box)
+
+    def show_control_tree(self):
+        """显示控件树对话框"""
+        # 获取当前点击的按钮作为根控件
+        sender = self.sender()
+
+        # 创建并显示控件树对话框
+        dialog = ControlTreeViewer(sender.parent(),self)
+        dialog.exec()
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-
-    # 确保中文显示正常
-    font = QFont("SimHei")
-    app.setFont(font)
-
-    window = QWidget()
-    layout = QVBoxLayout(window)
-    layout.setContentsMargins(20, 20, 20, 20)
-
-    # 添加搜索框
-    search_box = SearchBox()
-    layout.addWidget(search_box)
-
-    # 添加一些间距
-    layout.addStretch(1)
-
-    window.setWindowTitle("搜索框示例")
-    window.resize(500, 200)
+    window = MainWindow()
     window.show()
-
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
