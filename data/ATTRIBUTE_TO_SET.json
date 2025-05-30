@@ -1,0 +1,5 @@
+[
+  {"objectName": "historyListArea","objectPath": "w.noSpaceInterface.tp.historyListArea","attribute": "setFixedWidth"},
+  {"objectName": "listBox","objectPath": "w.noSpaceInterface.tp.historyListArea.listBox","attribute": "setFixedWidth"},
+  {"objectName": "list","objectPath": "w.noSpaceInterface.tp.historyListArea.list","attribute": "setFixedWidth"}
+]

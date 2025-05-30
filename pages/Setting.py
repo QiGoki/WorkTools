@@ -1,7 +1,9 @@
 from qfluentwidgets import Slider, LineEdit, CaptionLabel, ToolButton, FluentIcon, ToolTipFilter, \
     ToolTipPosition
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QVBoxLayout
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QVBoxLayout,QWidget
+import json
+from methods.get_resource_path import resource_path
 
 
 # 按钮初始化函数
@@ -15,8 +17,9 @@ def init_btn(btn, tip_text, signal_func):
 
 
 class Setting(QFrame):
-    def __init__(self, target_widgets: [], parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
+        self.root = parent
         # 批量保存widget
         self.sliders = []
         # reset按钮
@@ -33,14 +36,18 @@ class Setting(QFrame):
         self.main_layout = QVBoxLayout()
         self.main_layout.addLayout(self.btn_layout)
         self.setLayout(self.main_layout)
-
-        self.init(target_widgets)
+        #传root进来就行，其他的去data里找
+        self.init(self.root)
 
         self.setObjectName("setting")
+
     # 初始化，主要就是生生成lider
-    def init(self, target_widgets):
-        for widget in target_widgets:
-            item = SliderItem(widget)
+    def init(self, root):
+        data_real_path = resource_path(r"data/ATTRIBUTE_TO_SET.json")
+        with open(data_real_path, "r", encoding="utf-8") as f:
+            data_dict = json.load(f)
+        for widget_info in data_dict:
+            item = SliderItem(root, widget_info)
             self.main_layout.addWidget(item)
             self.sliders.append(item)
         # 按钮初始化
@@ -62,16 +69,28 @@ class Setting(QFrame):
 
 
 class SliderItem(QFrame):
-    def __init__(self, target_widget, parent=None):
+    def __init__(self, root, widget_info, parent=None):
         super().__init__(parent)
         self.init_value = 100
-        self.target_widget = target_widget
         self.title = CaptionLabel(self)
-        self.title.setText(target_widget.objectName())
         self.slider = Slider(Qt.Orientation.Horizontal)
         self.num_label = LineEdit()
-
-        self.initUI(target_widget)
+        # 整理info
+        # 绑定组件,顺便把title也设置了
+        # 如果有objcetName，直接用内置函数
+        if widget_info["objectName"]:
+            target_widget = root.findChild(QWidget,widget_info["objectName"])
+            self.title.setText(target_widget.objectName())
+        # 没有就根据path通过getattr找到该组件
+        else:
+            target_widget = root
+            path = widget_info["objectPath"].split('.')
+            self.title.setText(path[-2]+'.'+path[-1])
+            for child_path in path[1:]:
+                target_widget = getattr(target_widget, child_path)
+        self.target_widget = target_widget
+        # 传组件和要改的属性
+        self.initUI(target_widget,widget_info["attribute"])
 
         self.h_box_layout = QHBoxLayout()
         self.h_box_layout.addWidget(self.title)
@@ -80,7 +99,7 @@ class SliderItem(QFrame):
         self.setFixedWidth(500)
         self.setLayout(self.h_box_layout)
 
-    def initUI(self, target_widget):
+    def initUI(self, target_widget,attribute):
         self.init_value = target_widget.width()
         # 配置标题属性
         self.title.setFixedWidth(100)
@@ -91,18 +110,20 @@ class SliderItem(QFrame):
         # 配置输入框属性
         self.num_label.setText(str(self.init_value))
         self.num_label.setFixedWidth(50)
-        # 配置信号
-        self.slider.valueChanged.connect(self.on_slider_change)
-        self.num_label.textEdited.connect(self.on_label_change)
+        # 配置信号,把要set的属性也传进去
+        self.slider.valueChanged.connect(lambda value:self.on_slider_change(value,attribute))
+        self.num_label.textEdited.connect(lambda value:self.on_label_change(value,attribute))
 
-    def on_slider_change(self, value):
-        self.target_widget.setFixedWidth(value)
+    def on_slider_change(self, value,attribute):
+        target_attr = getattr(self.target_widget, attribute)
+        target_attr(value)
         self.num_label.setText(str(value))
 
-    def on_label_change(self, value):
+    def on_label_change(self, value, attribute):
         v = int(value)
         if self.slider.minimum() <= v <= self.slider.maximum():
-            self.target_widget.setFixedWidth(v)
+            target_attr = getattr(self.target_widget, attribute)
+            target_attr(v)
             self.slider.setValue(v)
 
     # 响应reset

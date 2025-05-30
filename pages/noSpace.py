@@ -85,6 +85,7 @@ class HistoryList(QWidget):
         self.setFixedWidth(350)
         self.setLayout(self.vBoxLayout)
 
+
     def initList(self):
         self.list.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -94,7 +95,6 @@ class HistoryList(QWidget):
             item.setSizeHint(itemWidget.size())
             self.list.addItem(item)
             self.list.setItemWidget(item, itemWidget)
-
     def initSearch(self):
         self.action = Action()
         self.searchLineEdit.setPlaceholderText("可按内容或时间搜索")

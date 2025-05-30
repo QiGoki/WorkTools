@@ -18,7 +18,7 @@ class Window(FluentWindow):
         self.noSpaceInterface = noSpace()
 
         #设置页面
-        self.settingInterface = Setting([self])
+        self.settingInterface = Setting(parent=self)
         self.initNavigation()
         self.initWindow()
 

@@ -25,7 +25,7 @@ class ControlTreeViewer(MessageBoxBase):
         layout.addWidget(self.title)
         layout.addWidget(self.tree_widget)
         self.viewLayout.addLayout(layout)
-        self.widget.setMinimumWidth(300)
+        self.widget.setMinimumWidth(700)
         # 展开所有节点
         self.tree_widget.expandAll()
 
@@ -48,7 +48,7 @@ class ControlTreeViewer(MessageBoxBase):
 
         # 存储widget引用以便后续操作(可选)
         tree_item.setData(0, Qt.UserRole, parent_widget)
-
+        tree_item.setFlags(Qt.ItemFlag.ItemIsEditable)
         # 递归添加所有子控件
         for child in parent_widget.findChildren(QWidget):
             self.build_control_tree(child, tree_item)
@@ -66,7 +66,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("控件树演示")
-        self.resize(400, 300)
+        self.resize(800, 600)
 
         # 创建中央部件和布局
         central_widget = QWidget()
@@ -111,3 +111,25 @@ if __name__ == "__main__":
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
+
+
+
+def build_control_tree(self, target_widget):
+    """递归构建控件树"""
+    # 创建当前控件的树节点
+    widget_info = [
+        target_widget.__class__.__name__,
+        target_widget.objectName() or "(未设置)",
+        self._get_widget_text(target_widget) or "(无文本)",
+        f"({target_widget.x()}, {target_widget.y()})"
+        ]
+
+    if target_widget.parent() is None:
+        # 根节点
+        tree_item = QTreeWidgetItem(self.tree_widget, widget_info)
+    else:
+        # 子节点
+        tree_item = QTreeWidgetItem(parent_item, widget_info)
+
+for child in parent_widget.findChildren(QWidget):
+    self.build_control_tree(child, tree_item)

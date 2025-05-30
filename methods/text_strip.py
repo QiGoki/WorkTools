@@ -12,7 +12,7 @@ def strip_text(text):
 
 def math_trans(text):
     r1 = r'\\\(|\)\\'
-    r2 = r'\\[a-z|A-Z]'
+    r2 = r'\\[a-z|A-Z][\_]'
     # \(和)\换成$，单斜杠的符号换成双斜杠
     text = re.sub(r1, '$', text)
     text = re.sub(r2, lambda m: '\\' + m.group(0), text)
